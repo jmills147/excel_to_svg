@@ -36,8 +36,8 @@ class AppWindow(tk.Frame):
         self.github_link.bind("<Button-1>", lambda e: self._open_in_webrowser("https://github.com/jmills147/excel_to_svg"))
         self.github_link.place(x=250, y=90)
 
-        self.version_lbl = tk.Label(self, text='v' + __version__)
-        self.version_lbl.place(x=265, y=70)
+        # self.version_lbl = tk.Label(self, text='v' + __version__)
+        # self.version_lbl.place(x=265, y=70)
 
         self.master.wm_title("Excel to SVG")
         self.master.geometry("300x120")
@@ -83,10 +83,10 @@ class AppWindow(tk.Frame):
         open_svg_btn.place(x=10, y=220)
 
         # Move github link
-        self.github_link.place(x=250, y=210)
+        self.github_link.place(x=250, y=220)
 
-        # Move version label
-        self.version_lbl.place(x=265, y=230)
+        # # Move version label
+        # self.version_lbl.place(x=265, y=230)
 
         # Resize window
         self.master.geometry("300x260")  # 230
