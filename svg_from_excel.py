@@ -1,22 +1,50 @@
+"""Simple script to produce svg from Excel chart
+
+Example:
+    Select a chart in the active sheet in Excel
+    Run this script:
+
+        $ python svg_from_excel.py
+
+    Produces svg in the same folder as workbook.
+
+    Also works if a range is selected, where the svg is Page 1 of the Print
+    Range, including headers and footers. You may want to 'Fit to 1 Page Wide/Tall'
+    and remove headers and footers to get what you want.
+
+    There is a simple GUI that calls this script – gui.py – and a no-install
+    windows executable.
+
+"""
+import xlwings as xw
 from pathlib import Path
+import fitz
 import re
 
-import fitz
-import xlwings as xw
-
-# Activate the chart to be exported (i.e. click on it so the resize handles appear)
-# Run the following VBA macro:
-# Sub ActiveChartToPdf()
-#     ActiveSheet.ExportAsFixedFormat Type:=xlTypePDF, Filename:="c:\temp\abc.pdf"
-# End Sub
-
-
 def generate_pdf_path(sht: xw.Sheet) -> Path:
-    
-    '''Generates a full path for the target pdf file based on active chart in the selected sheet
-    '''
 
-    wb = sht.book    
+    """Generates a full path for the target pdf file based on active
+    chart in the selected sheet
+
+    Given by:
+        {{ excel book folder* }} \ {{ book_name without suffix }}{{ sheet name }}_{{ chart name }}
+
+    Spaces in the book name, sheet name or chart name are replaced with underscores.
+
+    If the book does not have a folder – because it has not been saved –
+    then use the user's home folder.
+
+    If there is no active chart in the sheet then return:
+        {{ excel book folder* }} \ {{ book_name }}{{ sheet name }}_{{ chart name }}
+
+    Args:
+        sht: xlWings sheet object
+
+    Returns:
+        Full path save-to location for pdf
+
+    """
+    wb = sht.book
     
     try:
         sheet_and_chart = wb.api.ActiveChart.Name
@@ -29,27 +57,32 @@ def generate_pdf_path(sht: xw.Sheet) -> Path:
     book_sheet_chart = book_sheet_chart.replace(' ', '_')
     
     pdf_filename = book_sheet_chart + '.pdf'
-    # print(book_sheet_chart)
+
     wbk_path = Path(wb.fullname)
     
     if wbk_path.is_file():
         pdf_path = wbk_path.parent / pdf_filename
-    else:  # workbook has not been saved, so save pdf to user horm directory
+    else:  # workbook has not been saved, so save pdf to user home directory
         pdf_path = Path.home() / pdf_filename
     
     return pdf_path
 
 
-def svg_from_excel_pdf(pdf_path: Path,  
+def svg_from_excel_pdf(pdf_path: Path,
                        svg_path: Path) -> int:
-    
-    '''Extracts the svg from a single-page pdf, removes the padding around the svg and and saves it to a file
-    with the same name as the pdf 
-    '''
 
-    svg_path = pdf_path.with_suffix('.svg')
-    
-    with fitz.open(pdf_path) as pdf_file:        
+    """Extracts svg from pdf and saves it to save path (but with .svg suffix)
+
+    Args:
+        pdf_path:
+        svg_path:
+
+    Returns:
+        0 fof success
+
+    """
+
+    with fitz.open(pdf_path) as pdf_file:
         svg = pdf_file[0].get_svg_image()
     
     svg = reduce_svg_viewbox(svg)
@@ -61,11 +94,16 @@ def svg_from_excel_pdf(pdf_path: Path,
 
 
 def reduce_svg_viewbox(svg: str) -> str:
-    
-    '''Removes the padding around an svg that has been extracted from a pdf exporteded from Excel
 
-    Returns:    the svg string with the padding removed
-    '''
+    """Removes the padding around svg
+
+    Args:
+        svg: The svg string, usually for svg extracted from pdf from Excel
+
+    Returns:
+        svg string with the viewBox changed to remove the padding
+
+    """
 
     x_max = 0
     x_min = 99999
@@ -93,14 +131,14 @@ def reduce_svg_viewbox(svg: str) -> str:
             if y > y_max:
                 y_max = y
 
-    y_edge = re.search(r'"matrix\(.*,(.*)\)"', svg).group(1) # multiple matches but all the same: take first one
+    y_edge = re.search(r'"matrix\(.*,(.*)\)"', svg).group(1)  # multiple matches but all the same: take first one
     y_edge = float(y_edge)
     
     # print(f'{x_min=}, {x_max=}, {y_min=}, {y_max=}, {y_edge=}')
 
     reduced_viewbox_string= f'{x_min:.2f} {y_edge-y_max:.2f} {x_max-x_min:.2f} {y_max-y_min:.2f}'
     # print(reduced_viewbox_string)
-    svg = re.sub(r'viewBox=".*?"', f'viewBox="{reduced_viewbox_string}"', svg, count=1) # sub first match at top only
+    svg = re.sub(r'viewBox=".*?"', f'viewBox="{reduced_viewbox_string}"', svg, count=1)  # sub first match at top only
 
     # remove width and height
     svg = re.sub(r' width=".*?" height=".*?"', '', svg, count=1)
@@ -108,7 +146,21 @@ def reduce_svg_viewbox(svg: str) -> str:
     return svg
 
 
-def export_active_chart_to_svg():
+def export_active_chart_to_svg() -> str:
+
+    """Main routine
+
+    Generate save-to path
+    Excel export to pdf
+    Extract svg from pdf
+    Delete pdf
+
+    Args:
+
+    Returns:
+        String path to svg, for gui
+
+    """
 
     sht = xw.sheets.active
     pdf_path = generate_pdf_path(sht)
@@ -119,11 +171,13 @@ def export_active_chart_to_svg():
     
     svg_from_excel_pdf(pdf_path, svg_path)
 
-    pdf_path.unlink() # remove pdf
+    pdf_path.unlink()  # delete pdf file
 
     print(f'svg produced: {svg_path}')
+
     return str(svg_path)
 
 0
 if __name__ == '__main__':
-    export_active_chart_to_svg()
+
+    _ = export_active_chart_to_svg()

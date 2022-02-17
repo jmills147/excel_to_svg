@@ -1,17 +1,19 @@
+"""Simple GUI to call svg_from_excel.py
+
+Example:
+        $ python gui.py
+
+"""
+
 import tkinter as tk
-from tkinter.font import Font
 import webbrowser
 from pathlib import Path  # to convert file path to url
 
 __version__ = '0.1'
 
-from svg_from_pdf import export_active_chart_to_svg
+from svg_from_excel import export_active_chart_to_svg
 
 class AppWindow(tk.Frame):
-
-
-    def _open_in_webrowser(self, url):
-        webbrowser.open_new(url)
 
     def __init__(self):
 
@@ -71,7 +73,6 @@ class AppWindow(tk.Frame):
         w.insert(1.0, sz_svg_path)
         w.configure(state="disabled")
 
-
         # Open in browser button
         svg_url = Path(sz_svg_path).as_uri()
 
@@ -80,7 +81,6 @@ class AppWindow(tk.Frame):
                            command=lambda: self._open_in_webrowser(str(svg_url)))
 
         open_svg_btn.place(x=10, y=220)
-
 
         # Move github link
         self.github_link.place(x=250, y=210)
@@ -98,5 +98,11 @@ class AppWindow(tk.Frame):
         self.post_svg_winow_update(sz_svg_path)
 
 
+    def _open_in_webrowser(self, url):
+
+        webbrowser.open_new(url)
+
+
 if __name__ == '__main__':
+
     AppWindow()
