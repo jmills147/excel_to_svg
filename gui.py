@@ -27,7 +27,7 @@ class AppWindow(tk.Frame):
         self._Font = text['font'] # pick up the default font
 
         svg_btn = tk.Button(self,
-                           text="Create SVG",
+                           text="Export SVG",
                            command=self.svg)
 
         svg_btn.place(y=60, relx=0.5, anchor= tk.CENTER)
@@ -77,7 +77,7 @@ class AppWindow(tk.Frame):
         svg_url = Path(sz_svg_path).as_uri()
 
         open_svg_btn = tk.Button(self,
-                           text="Open SVG in Webrowser",
+                           text="Open SVG in Web Browser",
                            command=lambda: self._open_in_webrowser(str(svg_url)))
 
         open_svg_btn.place(x=10, y=220)
